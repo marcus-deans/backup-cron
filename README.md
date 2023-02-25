@@ -1,5 +1,3 @@
-# Postgres S3 backups
+# Postgres S3 backups for Hypothetical Books
 
-A simple NodeJS application to backup your PostgreSQL database to S3 via a cron.
-
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/I4zGrH)
+NodeJS app to backup content from Postgres database to S3 via a cron job. Both database and app hosted on Railway
