@@ -24,12 +24,13 @@ const uploadToS3 = async ({ name, path }: {name: string, path: string}) => {
   }
 
   const client = new S3Client(clientOptions);
+  const awsName = `${env.BACKUP_FILEPATH_PREFIX}/${name}`
 
   try {
     const data = await client.send(
       new PutObjectCommand({
         Bucket: bucket,
-        Key: name,
+        Key: awsName,
         Body: createReadStream(path),
       })
     );
@@ -72,7 +73,7 @@ export const backup = async () => {
     timestamp: timestamp,
     type: `${env.BACKUP_FILEPATH_PREFIX}`
   })
-  const filename = `${env.BACKUP_FILEPATH_PREFIX}/backup-${timestamp}.tar.gz`
+  const filename = `backup-${timestamp}.tar.gz`
   const filepath = `/tmp/${filename}`
 
   await dumpToFile(filepath)
