@@ -4,8 +4,13 @@ import { createReadStream } from "fs";
 
 import { env } from "./env";
 
+const { Node: Logtail } = require("@logtail/js");
+const logtail = new Logtail("6nRxM8PA3N6czsSEz38dXHKr");
+
+
 const uploadToS3 = async ({ name, path }: {name: string, path: string}) => {
   console.log("Uploading backup to S3...");
+  logtail.info("Uploading DB backup to S3");
 
   const bucket = env.AWS_S3_BUCKET;
 
@@ -20,19 +25,27 @@ const uploadToS3 = async ({ name, path }: {name: string, path: string}) => {
 
   const client = new S3Client(clientOptions);
 
-  await client.send(
-    new PutObjectCommand({
-      Bucket: bucket,
-      Key: name,
-      Body: createReadStream(path),
+  try {
+    const data = await client.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: name,
+        Body: createReadStream(path),
+      })
+    );
+    return data;
+    logtail.info("DB backup uploaded to S3");
+  } catch (err){
+    logtail.error("Error uploading DB backup to S3", {
+      error: err
     })
-  )
-
-  console.log("Backup uploaded to S3...");
+    console.log("Error", err);
+  }
 }
 
 const dumpToFile = async (path: string) => {
   console.log("Dumping DB to file...");
+  logtail.info("Dumping DB to file");
 
   await new Promise((resolve, reject) => {
     exec(
@@ -48,19 +61,25 @@ const dumpToFile = async (path: string) => {
     );
   });
 
+  logtail.info("DB dumped to file");
   console.log("DB dumped to file...");
 }
 
 export const backup = async () => {
-  console.log("Initiating DB backup...")
-
   let date = new Date().toISOString()
   const timestamp = date.replace(/[:.]+/g, '-')
+
+  logtail.info(`Initiating DB backup`, {
+    timestamp: timestamp,
+    type: `${env.BACKUP_FILEPATH_PREFIX}`
+  })
+
   const filename = `backup-${timestamp}.tar.gz`
   const filepath = `/tmp/${env.BACKUP_FILEPATH_PREFIX}/${filename}`
 
   await dumpToFile(filepath)
   await uploadToS3({name: filename, path: filepath})
 
-  console.log("DB backup complete...")
+  logtail.info(`DB backup complete`);
+  logtail.flush()
 }
