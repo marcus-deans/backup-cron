@@ -54,9 +54,12 @@ const dumpToFile = async (path: string) => {
       (error, stdout, stderr) => {
         if (error) {
           reject({ error: JSON.stringify(error), stderr });
+          logtail.error("Error dumping DB to file", {
+            error: JSON.stringify(error),
+          });
           return;
         }
-
+        logtail.info("PG dump successfully executed");
         resolve(undefined);
       }
     );
