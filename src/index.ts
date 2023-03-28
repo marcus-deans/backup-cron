@@ -4,6 +4,7 @@ import { backup } from "./backup";
 import { env } from "./env";
 
 const job = new CronJob(env.BACKUP_CRON_SCHEDULE, async () => {
+  console.log("Starting cron job");
   try {
     await backup();
   } catch (error) {
